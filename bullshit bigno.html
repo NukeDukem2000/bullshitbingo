@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bullshit Bingo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 150px);
+            grid-gap: 5px;
+            position: relative;
+            width: 460px;
+            height: 460px;
+        }
+        .tile {
+            width: 150px;
+            height: 150px;
+            background-color: #fff;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.2em;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        .tile.crossed::before {
+            content: '';
+            position: absolute;
+            width: 80%;
+            height: 2px;
+            background-color: black;
+            transform: rotate(45deg);
+        }
+        .tile.crossed::after {
+            content: '';
+            position: absolute;
+            width: 80%;
+            height: 2px;
+            background-color: black;
+            transform: rotate(-45deg);
+        }
+        .strike {
+            position: absolute;
+            background-color: rgba(255, 0, 0, 0.7);
+            height: 4px;
+            width: 0;
+            transition: width 0.5s ease;
+            pointer-events: none;
+        }
+        .strike.active {
+            width: 100%;
+        }
+        .strike-vert {
+            position: absolute;
+            background-color: rgba(255, 0, 0, 0.7);
+            width: 4px;
+            height: 0;
+            transition: height 0.5s ease;
+            pointer-events: none;
+        }
+        .strike-vert.active {
+            height: 100%;
+        }
+        #strike-row-0 { top: 75px; left: 0; }
+        #strike-row-1 { top: 230px; left: 0; }
+        #strike-row-2 { top: 385px; left: 0; }
+        #strike-col-0 { top: 0; left: 75px; }
+        #strike-col-1 { top: 0; left: 230px; }
+        #strike-col-2 { top: 0; left: 385px; }
+        #strike-diag-1 { top: 0; left: 0; width: 0; transform: rotate(45deg); transform-origin: top left; }
+        #strike-diag-2 { top: 0; right: 0; width: 0; transform: rotate(-45deg); transform-origin: top right; }
+        #strike-diag-1.active, #strike-diag-2.active { width: 650px; }
+        #bingo-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            color: red;
+            font-weight: bold;
+            display: none;
+            pointer-events: none;
+        }
+        #bingo-text.flash {
+            display: block;
+            animation: flash 1s;
+        }
+        @keyframes flash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        #reset-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #reset-btn:hover {
+            background-color: #cc0000;
+        }
+        footer {
+            margin-top: 10px;
+            font-size: 1em;
+            color: #555;
+        }
+        #prize-prompt {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+        }
+        #yes-btn {
+            padding: 20px 40px;
+            font-size: 2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        #no-btn {
+            padding: 5px 10px;
+            font-size: 1em;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #slot-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            width: 300px;
+            height: 150px;
+            border: 5px solid #333;
+            overflow: hidden;
+            background-color: #222;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        #slot-reel {
+            position: absolute;
+            width: 100%;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .slot-item {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.2em;
+            color: #fff;
+            background-color: #444;
+            border-bottom: 2px solid #333;
+        }
+        #slot-reel.spin {
+            animation: spin 4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+        @keyframes spin {
+            0% { transform: translateY(0); }
+            75% { transform: translateY(calc(var(--final-position) + 150px)); }
+            100% { transform: translateY(var(--final-position)); }
+        }
+        #slot-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            border: 5px solid gold;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #prize-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            text-align: center;
+        }
+        #prize-display.flash {
+            animation: prizeFlash 3s;
+        }
+        @keyframes prizeFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Bullshit Bingo</h1>
+    <div class="grid" id="grid">
+        <div class="tile" data-index="0">I would do it differently</div>
+        <div class="tile" data-index="1">Try again</div>
+        <div class="tile" data-index="2">Fantastic!</div>
+        <div class="tile" data-index="3">All is Love</div>
+        <div class="tile" data-index="4">Bullshit Bingo!</div>
+        <div class="tile" data-index="5">(random screech)</div>
+        <div class="tile" data-index="6">I thought you were working for ASML</div>
+        <div class="tile" data-index="7">What is your logic</div>
+        <div class="tile" data-index="8">Are you sure?</div>
+        <div class="strike" id="strike-row-0"></div>
+        <div class="strike" id="strike-row-1"></div>
+        <div class="strike" id="strike-row-2"></div>
+        <div class="strike-vert" id="strike-col-0"></div>
+        <div class="strike-vert" id="strike-col-1"></div>
+        <div class="strike-vert" id="strike-col-2"></div>
+        <div class="strike" id="strike-diag-1"></div>
+        <div class="strike" id="strike-diag-2"></div>
+        <div id="bingo-text">BULLSHIT BINGO</div>
+    </div>
+    <button id="reset-btn">Reset All</button>
+    <footer>Bullshit Bingo by DHPQ 2025</footer>
+
+    <div id="prize-prompt">
+        <p>Win a prize?</p>
+        <button id="yes-btn">YES</button>
+        <button id="no-btn">NO</button>
+    </div>
+    <div id="slot-container">
+        <div id="slot-reel">
+            <!-- Repeat prizes 3 times to ensure visibility during spin -->
+            <div class="slot-item">A wet pack of Marlboro Reds containing 5 cigarettes</div>
+            <div class="slot-item">Half-Empty Jack Daniels</div>
+            <div class="slot-item">10 Minute Rant</div>
+            <div class="slot-item">A wet pack of Marlboro Reds containing 5 cigarettes</div>
+            <div class="slot-item">Half-Empty Jack Daniels</div>
+            <div class="slot-item">10 Minute Rant</div>
+            <div class="slot-item">A wet pack of Marlboro Reds containing 5 cigarettes</div>
+            <div class="slot-item">Half-Empty Jack Daniels</div>
+            <div class="slot-item">10 Minute Rant</div>
+        </div>
+        <div id="slot-frame"></div>
+    </div>
+    <div id="prize-display">
+        <h2 id="prize-text"></h2>
+    </div>
+
+    <script>
+        const tiles = document.querySelectorAll('.tile');
+        const bingoText = document.getElementById('bingo-text');
+        const resetBtn = document.getElementById('reset-btn');
+        const prizePrompt = document.getElementById('prize-prompt');
+        const yesBtn = document.getElementById('yes-btn');
+        const noBtn = document.getElementById('no-btn');
+        const slotContainer = document.getElementById('slot-container');
+        const slotReel = document.getElementById('slot-reel');
+        const prizeDisplay = document.getElementById('prize-display');
+        const prizeText = document.getElementById('prize-text');
+        const strikes = {
+            rows: [document.getElementById('strike-row-0'), document.getElementById('strike-row-1'), document.getElementById('strike-row-2')],
+            cols: [document.getElementById('strike-col-0'), document.getElementById('strike-col-1'), document.getElementById('strike-col-2')],
+            diag1: document.getElementById('strike-diag-1'),
+            diag2: document.getElementById('strike-diag-2')
+        };
+        let completedLines = new Set();
+
+        tiles.forEach(tile => {
+            tile.addEventListener('click', () => {
+                tile.classList.toggle('crossed');
+                checkBingo();
+            });
+        });
+
+        resetBtn.addEventListener('click', () => {
+            tiles.forEach(tile => tile.classList.remove('crossed'));
+            strikes.rows.forEach(strike => strike.classList.remove('active'));
+            strikes.cols.forEach(strike => strike.classList.remove('active'));
+            strikes.diag1.classList.remove('active');
+            strikes.diag2.classList.remove('active');
+            completedLines.clear();
+            hidePrompt();
+        });
+
+        noBtn.addEventListener('click', hidePrompt);
+        yesBtn.addEventListener('click', spinSlot);
+
+        function checkBingo() {
+            const crossed = Array.from(tiles).map(tile => tile.classList.contains('crossed'));
+            const wins = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+
+            let newBingo = false;
+            wins.forEach((line, index) => {
+                const lineKey = line.join(',');
+                if (line.every(i => crossed[i]) && !completedLines.has(lineKey)) {
+                    completedLines.add(lineKey);
+                    if (index < 3) strikes.rows[index].classList.add('active');
+                    else if (index < 6) strikes.cols[index - 3].classList.add('active');
+                    else if (index === 6) strikes.diag1.classList.add('active');
+                    else strikes.diag2.classList.add('active');
+                    newBingo = true;
+                }
+            });
+
+            if (newBingo) {
+                showBingoText();
+                setTimeout(() => prizePrompt.style.display = 'block', 1000);
+            }
+        }
+
+        function showBingoText() {
+            bingoText.classList.add('flash');
+            setTimeout(() => bingoText.classList.remove('flash'), 1000);
+        }
+
+        function hidePrompt() {
+            prizePrompt.style.display = 'none';
+            slotContainer.style.display = 'none';
+            prizeDisplay.style.display = 'none';
+            slotReel.style.transform = 'translateY(0)';
+            slotReel.classList.remove('spin');
+        }
+
+        function spinSlot() {
+            prizePrompt.style.display = 'none';
+            slotContainer.style.display = 'block';
+
+            const prizes = [
+                'A wet pack of Marlboro Reds containing 5 cigarettes',
+                'Half-Empty Jack Daniels',
+                '10 Minute Rant'
+            ];
+            const randomPrize = Math.floor(Math.random() * 3);
+            const finalPosition = -(randomPrize * 150 + 150 * 3); // Land on the 2nd cycle of prizes
+
+            slotReel.style.setProperty('--final-position', `${finalPosition}px`);
+            slotReel.classList.add('spin');
+
+            setTimeout(() => {
+                setTimeout(() => showPrize(prizes[randomPrize]), 1000); // Freeze for 1 second
+            }, 4000); // Spin for 4 seconds
+        }
+
+        function showPrize(prize) {
+            slotContainer.style.display = 'none';
+            prizeText.textContent = `You Won: ${prize}`;
+            prizeDisplay.style.display = 'block';
+            prizeDisplay.style.fontSize = '3em';
+            prizeDisplay.classList.add('flash');
+            setTimeout(() => {
+                prizeDisplay.style.display = 'none';
+                prizeDisplay.classList.remove('flash');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
