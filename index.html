@@ -255,16 +255,19 @@
     </div>
     <div id="slot-container">
         <div id="slot-reel">
-            <!-- Repeat prizes 3 times to ensure visibility during spin -->
+            <!-- Repeat prizes twice to ensure visibility during spin -->
             <div class="slot-item">A wet pack of Marlboro Reds containing 5 cigarettes</div>
-            <div class="slot-item">Half-Empty Jack Daniels</div>
+            <div class="slot-item">A lukewarm beer</div>
             <div class="slot-item">10 Minute Rant</div>
+            <div class="slot-item">DST proposal (rejected)</div>
+            <div class="slot-item">A sausage roll from 6f4</div>
+            <div class="slot-item">Renee smiles at you (you won)</div>
             <div class="slot-item">A wet pack of Marlboro Reds containing 5 cigarettes</div>
-            <div class="slot-item">Half-Empty Jack Daniels</div>
+            <div class="slot-item">A lukewarm beer</div>
             <div class="slot-item">10 Minute Rant</div>
-            <div class="slot-item">A wet pack of Marlboro Reds containing 5 cigarettes</div>
-            <div class="slot-item">Half-Empty Jack Daniels</div>
-            <div class="slot-item">10 Minute Rant</div>
+            <div class="slot-item">DST proposal (rejected)</div>
+            <div class="slot-item">A sausage roll from 6f4</div>
+            <div class="slot-item">Renee smiles at you (you won)</div>
         </div>
         <div id="slot-frame"></div>
     </div>
@@ -357,10 +360,13 @@
 
             const prizes = [
                 'A wet pack of Marlboro Reds containing 5 cigarettes',
-                'Half-Empty Jack Daniels',
-                '10 Minute Rant'
+                'A lukewarm beer',
+                '10 Minute Rant',
+                'DST proposal (rejected)',
+                'A sausage roll from 6f4',
+                'Renee smiles at you (you won)'
             ];
-            const randomPrize = Math.floor(Math.random() * 3);
+            const randomPrize = Math.floor(Math.random() * 6);
             const finalPosition = -(randomPrize * 150 + 150 * 3); // Land on the 2nd cycle of prizes
 
             slotReel.style.setProperty('--final-position', `${finalPosition}px`);
