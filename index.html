@@ -189,11 +189,11 @@
             border-bottom: 2px solid #333;
         }
         #slot-reel.spin {
-            animation: spin 4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            animation: spin 4s ease-out forwards;
         }
         @keyframes spin {
             0% { transform: translateY(0); }
-            75% { transform: translateY(calc(var(--final-position) + 150px)); }
+            50% { transform: translateY(calc(var(--spin-distance) * 0.8)); }
             100% { transform: translateY(var(--final-position)); }
         }
         #slot-frame {
@@ -255,19 +255,25 @@
     </div>
     <div id="slot-container">
         <div id="slot-reel">
-            <!-- Repeat prizes twice to ensure visibility during spin -->
+            <!-- Repeat prizes 3 times for a longer, visible spin -->
             <div class="slot-item">A wet pack of Marlboro Reds containing 5 cigarettes</div>
             <div class="slot-item">A lukewarm beer</div>
             <div class="slot-item">10 Minute Rant</div>
             <div class="slot-item">DST proposal (rejected)</div>
             <div class="slot-item">A sausage roll from 6f4</div>
-            <div class="slot-item">Renee smiles at you (you won)</div>
+            <div class="slot-item">Renee smiles at you (best prize)</div>
             <div class="slot-item">A wet pack of Marlboro Reds containing 5 cigarettes</div>
             <div class="slot-item">A lukewarm beer</div>
             <div class="slot-item">10 Minute Rant</div>
             <div class="slot-item">DST proposal (rejected)</div>
             <div class="slot-item">A sausage roll from 6f4</div>
-            <div class="slot-item">Renee smiles at you (you won)</div>
+            <div class="slot-item">Renee smiles at you (best prize)</div>
+            <div class="slot-item">A wet pack of Marlboro Reds containing 5 cigarettes</div>
+            <div class="slot-item">A lukewarm beer</div>
+            <div class="slot-item">10 Minute Rant</div>
+            <div class="slot-item">DST proposal (rejected)</div>
+            <div class="slot-item">A sausage roll from 6f4</div>
+            <div class="slot-item">Renee smiles at you (best prize)</div>
         </div>
         <div id="slot-frame"></div>
     </div>
@@ -364,11 +370,16 @@
                 '10 Minute Rant',
                 'DST proposal (rejected)',
                 'A sausage roll from 6f4',
-                'Renee smiles at you (you won)'
+                'Renee smiles at you (best prize)'
             ];
             const randomPrize = Math.floor(Math.random() * 6);
-            const finalPosition = -(randomPrize * 150 + 150 * 3); // Land on the 2nd cycle of prizes
+            const prizeHeight = 150;
+            const cycleHeight = prizes.length * prizeHeight; // 900px per cycle
+            const spinCycles = 3; // Spin through 3 full cycles
+            const spinDistance = -(cycleHeight * spinCycles); // -2700px for speed
+            const finalPosition = -(randomPrize * prizeHeight); // Exact stop on prize
 
+            slotReel.style.setProperty('--spin-distance', `${spinDistance}px`);
             slotReel.style.setProperty('--final-position', `${finalPosition}px`);
             slotReel.classList.add('spin');
 
